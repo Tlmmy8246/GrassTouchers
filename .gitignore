@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -26,6 +27,8 @@ backend/venv
 *.sln
 *.sw?
 =======
+=======
+>>>>>>> 3e89230237725f17a9ac197b6c80ed3f07aece45
 # Logs
 logs
 *.log
@@ -51,4 +54,3 @@ dist-ssr
 *.sln
 *.sw?
 backend/venv
->>>>>>> b921e2f (Updated gitignore)
