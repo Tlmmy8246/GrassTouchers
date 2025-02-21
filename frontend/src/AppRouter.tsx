@@ -11,14 +11,14 @@ const AppRouter = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <BrowserRouter>
-      <Routes>
-        <Route path={routePaths.auth.login} element={<Login />} />
+        <Routes>
+          <Route path={routePaths.auth.login} element={<Login />} />
 
-        {/* Protected Routes here */}
-        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-          <Route path={routePaths.home} element={<div>HOME PAGE HERE</div>} />
-          <Route path={routePaths.globalChat} element={<GlobalChat />} />
-        </Route>
+          {/* Protected Routes here */}
+          <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+            <Route path={routePaths.home} element={<div>HOME PAGE HERE</div>} />
+            <Route path={routePaths.globalChat} element={<GlobalChat />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </Suspense>
