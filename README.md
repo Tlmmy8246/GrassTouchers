@@ -1,7 +1,5 @@
 # Hackathon
 atish is stupid
-<<<<<<< HEAD
-=======
 
 
 
@@ -47,4 +45,3 @@ classDiagram
 
 
 ```
->>>>>>> ab5302b (bob)
