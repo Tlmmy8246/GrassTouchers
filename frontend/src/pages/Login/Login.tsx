@@ -1,5 +1,20 @@
+import { useLogin } from "api/auth";
+
 const Login = () => {
-    return <div> THIS IS THE LOGIN PAGE</div>
+    const { mutate } = useLogin();
+
+    const handleBtnClick = () => {
+        mutate({
+            username: "admin",
+            password: "admin"
+        })
+    }
+
+    return (
+        <div>
+            <button onClick={handleBtnClick}>Login</button>
+        </div>
+    )
 }
 
 export default Login;
