@@ -1,7 +1,8 @@
 // TODO: Add your API endpoints from fastapi here
 export const endpoints = {
 	auth: {
-		login: '/login'
+		login: '/login',
+		postLogin: '/post-login/'
 	},
 	chat: {
 		duel: {
