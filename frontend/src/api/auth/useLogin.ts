@@ -12,7 +12,7 @@ interface ILoginPostData {
 }
 
 export const login = (postData: ILoginPostData) => {
-	return http().post(endpoints.auth.login, postData);
+	return http().post(endpoints.auth.postLogin, postData);
 }
 
 export const useLogin = () => {
