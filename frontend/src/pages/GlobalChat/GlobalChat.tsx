@@ -12,6 +12,7 @@ import thistbh from "assets/thistbh.svg";
 import cross from "assets/x.svg";
 
 interface IMessage {
+  id: number;
   text: string;
   timestamp: number;
   username: string;
@@ -26,6 +27,7 @@ const GlobalChat = () => {
     number | null
   >(null);
 
+
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
   const userData = useUserStore((state) => state.user);
@@ -37,6 +39,7 @@ const GlobalChat = () => {
   const handleSendClick = () => {
     if (userData != null) {
       const message: IMessage = {
+        id: 0,
         text: messageText,
         timestamp: Date.now(),
         username: userData.username,
@@ -79,28 +82,29 @@ const GlobalChat = () => {
     { src: cross, alt: "cross" },
   ];
 
-  const handleReactionClick = (messageIndex: number, reaction: string) => {
-    setMessages((prevMessages) =>
-      prevMessages.map((msg, index) => {
-        if (index !== messageIndex) return msg;
+  const handleReactionClick = (msgId: number, reaction: string) => {
+    const messageIndex = messages.findIndex((msg) => msg.id === msgId);
 
-        const reactions = { ...msg.reactions };
+    if (messageIndex === -1) return;
 
-        if (!reactions[reaction]) {
-          reactions[reaction] = [];
-        }
+    const newMessages = [...messages];
+    const message = newMessages[messageIndex];
+    const reactions = { ...message.reactions };
 
-        if (reactions[reaction].includes(userData?.username as string)) {
-          reactions[reaction] = reactions[reaction].filter(
-            (user) => user !== userData?.username
-          );
-        } else {
-          reactions[reaction].push(userData?.username as any);
-        }
+    if (!reactions[reaction]) {
+      reactions[reaction] = [];
+    }
 
-        return { ...msg, reactions };
-      })
-    );
+    if (reactions[reaction].includes(userData?.username as string)) {
+      reactions[reaction] = reactions[reaction].filter(
+        (user) => user !== userData?.username
+      );
+    } else {
+      reactions[reaction].push(userData?.username as any);
+    }
+
+    newMessages[messageIndex] = { ...message, reactions };
+    setMessages(newMessages);
 
     // TODO: Integrate API to persist reactions
   };
@@ -150,10 +154,10 @@ const GlobalChat = () => {
                   </p>
                   {blockMsg.messages.length > 0 &&
                     blockMsg.messages.map((msg, index) => (
-                      <div className='relative'>
+                      <div className='relative' key={msg.id}>
                         <div
                           className='w-full hover:bg-profile-bg/75 p-0.25'
-                          onMouseEnter={() => setHoveredMessage(msg.timestamp)}
+                          onMouseEnter={() => setHoveredMessage(msg.id)}
                         >
                           <p
                             key={index}
@@ -177,7 +181,7 @@ const GlobalChat = () => {
                                         : "5hover:scale-110"
                                         }`}
                                       onClick={() =>
-                                        handleReactionClick(index, reaction)
+                                        handleReactionClick(msg.id, reaction)
                                       }
                                     >
                                       <img
@@ -200,12 +204,12 @@ const GlobalChat = () => {
                         </div>
 
                         {/* NOTE: Reaction Picker (Appears on hovering a message). */}
-                        {(hoveredMessage === msg.timestamp ||
-                          reactionPanelVisible === msg.timestamp) && (
+                        {(hoveredMessage === msg.id ||
+                          reactionPanelVisible === msg.id) && (
                             <div
                               className='absolute top-4.5 left-0 mt-2 flex gap-2 bg-profile-bg/80 p-2 rounded-lg shadow-lg z-10'
                               onMouseEnter={() =>
-                                setReactionPanelVisible(msg.timestamp)
+                                setReactionPanelVisible(msg.id)
                               }
                               onMouseLeave={() => setReactionPanelVisible(null)}
                             >
@@ -214,7 +218,7 @@ const GlobalChat = () => {
                                   key={i}
                                   className='transition-transform transform hover:scale-110'
                                   onClick={() =>
-                                    handleReactionClick(index, icon.alt)
+                                    handleReactionClick(msg.id, icon.alt)
                                   }
                                 >
                                   <img
