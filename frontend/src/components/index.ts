@@ -4,6 +4,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Input from "./Input";
 import Button from "./Button";
 import FullPageLoader from "./FullPageLoader";
+import Navbar from "./Navbar";
 
 import { ProtectedRouteProps } from "./ProtectedRoute";
 
@@ -13,7 +14,8 @@ export {
 	ProtectedRoute,
 	Input,
 	Button,
-	FullPageLoader
+	FullPageLoader,
+	Navbar
 };
 
 export type {
