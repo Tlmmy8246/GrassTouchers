@@ -22,14 +22,14 @@ interface IMessage {
 }
 
 
-const getRandomCoordinate = (max) => Math.floor(Math.random() * max);
+const getRandomCoordinate = (max: any) => Math.floor(Math.random() * max);
 
-const Grass = ({ x, y, initialSize, growthRate }) => {
+const Grass = ({ x, y, initialSize, growthRate }: any) => {
   const [size, setSize] = useState(initialSize);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setSize((prevSize) => prevSize + growthRate);
+      setSize((prevSize: any) => prevSize + growthRate);
     }, 1000); // 1 minute interval
 
     return () => clearInterval(interval);
