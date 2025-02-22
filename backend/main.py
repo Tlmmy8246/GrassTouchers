@@ -156,5 +156,32 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
+"""ANTI-SOCIAL CREDIT CODE RESIDES HEREIN"""
+
+@app.get("/antiSocialCredit/{username}")
+async def get_anti_social_credit(username: str):
+    try:
+        response = (
+            db_client.table("users")
+            .select("anti_social_credit")
+            .eq("username", username)
+            .execute()
+        )
+
+        print("Here's the response.data: ", response.data)
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Invalid username")
+        
+        return {"username": username, "anti_social_credit": response.data[0]["anti_social_credit"]}
+
+    except Exception as e:
+        if e.status_code == 404:
+            raise HTTPException(status_code=404, detail="Invalid username")
+        else:
+            print(f"Something went wrong: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
 if __name__ == "__main__":
     uvicorn.run("example:app", host="127.0.0.1", port=8000, reload=True)
