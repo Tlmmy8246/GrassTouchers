@@ -7,6 +7,9 @@ export const endpoints = {
 	chat: {
 		duel: {
 			messages: 'duel/messages'
+		},
+		global: {
+			messages: 'global/messages'
 		}
 	}
 }
