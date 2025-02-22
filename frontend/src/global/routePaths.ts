@@ -6,8 +6,8 @@ export const routePaths = {
 	},
 	leaderboard: '/leaderboard',
 
-	// TODO: Add private routes here
 	// private routes
 	home: '/',
-	globalChat: '/global-chat'
+	globalChat: '/global-chat',
+	leaderboard: '/leaderboard'
 }

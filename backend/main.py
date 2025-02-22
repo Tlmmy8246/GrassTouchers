@@ -36,8 +36,9 @@ app = FastAPI()
 manager = ConnectionManager()
 
 origins = [
-    "http://localhost",
-    "http://localhost:3000",  # This should be your frontend URL
+    # "http://localhost",
+    # "http://localhost:3000",  # This should be your frontend URL
+    '*'
 ]
 
 app.add_middleware(
@@ -73,7 +74,7 @@ async def login(user: User):
         if not response or not verify_password(
             user.password, response.data.get("password_hash")
         ):
-            raise HTTPException(status_code=401, detail="Invalid password")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
         token = create_access_token(user.username)
 
@@ -84,7 +85,7 @@ async def login(user: User):
         }
 
     except:
-        raise HTTPException(status_code=401, detail="Invalid username")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {"message": "Success"}
 
@@ -161,21 +162,54 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             try:
                 authenticated_message = json.loads(data)
-                message = authenticated_message['message']
-                if 'token' in authenticated_message.keys():
-                    username = verify_token(authenticated_message['token'][7:])
-                    if username != message['username']:
-                        raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
+                message = authenticated_message["message"]
+                if "token" in authenticated_message.keys():
+                    username = verify_token(authenticated_message["token"][7:])
+                    if username != message["username"]:
+                        raise HTTPException(
+                            status_code=401,
+                            detail="Invalid token, please reauthenticate!",
+                        )
                     else:
-                        response = db_client.table("messages").insert(message).execute()
-                        await manager.broadcast(json.dumps(message)) 
+                        response = db_client.table(
+                            "messages").insert(message).execute()
+                        await manager.broadcast(json.dumps(message))
                 else:
-                    raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
+                    raise HTTPException(
+                        status_code=401, detail="Invalid token, please reauthenticate!"
+                    )
             except APIError as error:
                 print("Failed to send message, tell the client probably", error)
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+"""ANTI-SOCIAL CREDIT CODE RESIDES HEREIN"""
+
+@app.get("/antiSocialCredit/{username}")
+async def get_anti_social_credit(username: str):
+    try:
+        response = (
+            db_client.table("users")
+            .select("anti_social_credit")
+            .eq("username", username)
+            .execute()
+        )
+
+        print("Here's the response.data: ", response.data)
+
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Invalid username")
+        
+        return {"username": username, "anti_social_credit": response.data[0]["anti_social_credit"]}
+
+    except Exception as e:
+        if e.status_code == 404:
+            raise HTTPException(status_code=404, detail="Invalid username")
+        else:
+            print(f"Something went wrong: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 if __name__ == "__main__":
