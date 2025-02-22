@@ -4,6 +4,7 @@ export const routePaths = {
 		login: '/login',
 		register: '/register',
 	},
+	leaderboard: '/leaderboard',
 
 	// private routes
 	home: '/',
