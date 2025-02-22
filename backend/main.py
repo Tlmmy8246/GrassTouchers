@@ -7,7 +7,7 @@ import uvicorn
 from db.supabase import create_supabase_client
 import json
 from postgrest.exceptions import APIError
-from messages import Message, MessageType
+from messages import Message, MessageType, parse_reaction, decode_reaction
 
 db_client = create_supabase_client()
 OLD_MESSAGE_LOAD_AMOUNT = 50
@@ -139,18 +139,38 @@ async def leaderboard(query: str = "messages"):
 
 
 async def send_old_messages(websocket: WebSocket):
-    response = None
+    messages = None
+    reactions = None
     try:
-        response = (
+        messages = (
             db_client.table("messages")
             .select("*")
             .limit(OLD_MESSAGE_LOAD_AMOUNT)
             .execute()
         )
+        reactions = (
+            db_client.table("reactions")
+            .select("*")
+            .limit(OLD_MESSAGE_LOAD_AMOUNT)
+            .execute()
+        )
+        for reaction in reactions.data:
+            for message in messages.data:
+                if reaction['message_id'] == message['message_id']:
+                    print("Found",reaction['reaction'],"for",message['message_id'])
+                    decoded_reaction = decode_reaction(reaction['reaction'])
+                    if 'reactions' not in message.keys():
+                        message['reactions'] = {}
+                    if decoded_reaction not in message['reactions'].keys():
+                        message['reactions'][decoded_reaction] = []
+                    message['reactions'][decoded_reaction].append(reaction['username'])
+
+        # print("Messages with reactions:", messages)
+
     except APIError as error:
         print("Failed to load messages, tell the client probably", error)
-    if response != None:
-        for message in response.data:
+    if messages != None:
+        for message in messages.data:
             await manager.send_personal_message(json.dumps(message), websocket)
 
 
@@ -178,12 +198,46 @@ async def websocket_endpoint(websocket: WebSocket):
                     print(response)
                     db_message['message_id'] = response.data[0]['message_id']
                     await manager.broadcast(json.dumps(db_message))
-                elif message.message_type == MessageType.REACTION:
-                    pass
+                elif message.message_type == MessageType.ADD_REACTION:
+                    db_message = {
+                        "username": message.username,
+                        "message_id": message.content.id,
+                        "reaction": parse_reaction(message.content.reaction)
+                    }
+                    response = db_client.table("reactions").insert(db_message).execute()
+                    # Add coins to the client
+                    # Get number of coins
+                    response = (
+                        db_client.table("users")
+                        .select("anti_social_credit")
+                        .eq("username", message.username)
+                        .execute()
+                    )
+                    credits = response.data[0]["anti_social_credit"]
+                    credits += 100
+                    db_message = {
+                        "username"
+                    }
+                    response = (
+                        db_client.table("users")
+                            .update({"anti_social_credit": credits})
+                            .eq("username", message.username)
+                            .execute()
+                    )
+
+                    # TODO: Forward this to clients
+                elif message.message_type == MessageType.REMOVE_REACTION:
+                    response = (db_client.table("reactions")
+                            .delete()
+                            .eq("username", message.username)
+                            .eq("message_id",message.content.id)
+                            .eq("reaction",parse_reaction(message.content.reaction))
+                            .execute()
+                            )
+                    # TODO: Forward this to clients
             else:
                 raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
                 
-
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
