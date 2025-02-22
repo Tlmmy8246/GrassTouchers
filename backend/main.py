@@ -1,20 +1,9 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import uvicorn
+from models import Message, LoginData
 
 app = FastAPI()
-
-class Message(BaseModel):
-    text: str
-    timestamp: int
-    uid: str
-
-
-class LoginData(BaseModel):
-    username: str
-    password: str
-
 
 origins = [
     "http://localhost",
