@@ -4,6 +4,7 @@ import { useMutation } from "react-query";
 import { useNavigate } from "react-router";
 import { useUserStore } from "store/useUserStore";
 import http from "utils/https";
+import toast from "react-hot-toast";
 
 interface IRegisterPostData {
 	username: string;
@@ -20,6 +21,7 @@ export const useRegister = () => {
 
 	return useMutation(register, {
 		onSuccess: () => {
+			toast.success('Registration successful!');
 			navigate(routePaths.auth.login);
 		},
 		onError: (error) => {

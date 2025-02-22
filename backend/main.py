@@ -74,7 +74,7 @@ async def login(user: User):
         if not response or not verify_password(
             user.password, response.data.get("password_hash")
         ):
-            raise HTTPException(status_code=401, detail="Invalid password")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
         token = create_access_token(user.username)
 
@@ -85,7 +85,7 @@ async def login(user: User):
         }
 
     except:
-        raise HTTPException(status_code=401, detail="Invalid username")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {"message": "Success"}
 
@@ -133,7 +133,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
             data = await websocket.receive_text()
             try:
                 message = json.loads(data)
-                response = db_client.table("messages").insert(message).execute()
+                response = db_client.table(
+                    "messages").insert(message).execute()
                 await manager.broadcast(data)
             except APIError as error:
                 print("Failed to send message, tell the client probably", error)
