@@ -1,39 +1,95 @@
-import { endpoints } from "global/endpoints";
-import http from "utils/https";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSendMessage } from "api/chat"; // Assuming this is the hook to send the message
 
 const GlobalChat = () => {
     // State to store the input value
     const [messageText, setMessageText] = useState<string>("");
+    const [messages, setMessages] = useState<IMessage[]>([]);
+    const [socketState, setSocketState] = useState<number | null>(null);
 
-    const sendMessage = (message: IMessage) => {
-        http().post(endpoints.chat.global.messages, message);
-    };
+    const uid = "user1"; // TODO: Put the user's actual user id here
+    const token = "1"   // TODO: I imagine this could be some kind of auth thing
 
+    const [socket, setSocket] = useState<WebSocket | null>(null);
+
+    // Handle input changes
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setMessageText(e.target.value); // Update the state with the input value
+        setMessageText(e.target.value);
     };
 
     const handleSendClick = () => {
-        const message: IMessage = { 
+        const message: IMessage = {
             text: messageText,
             timestamp: Date.now(),
-            uid: "user1"
-        }; // Create message object
-        sendMessage(message); 
-        setMessageText(""); 
+            uid: uid
+        };
+        setMessageText(""); // Clear input after sending
+        socket?.send(JSON.stringify(message));
     };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            handleSendClick();
+        }
+    };
+
+    useEffect(() => {
+        const newSocket = new WebSocket("ws://localhost:8000/ws/"+token);
+        newSocket.addEventListener("message", (event) => {
+            const message = JSON.parse(event.data);
+            setMessages((prevMessages) => [...prevMessages, message]);
+        });
+        newSocket.addEventListener("open", (event) => {
+            setSocketState(WebSocket.OPEN);
+        });
+        newSocket.addEventListener("error", () => {
+            setSocketState(WebSocket.CLOSING); 
+        });
+        newSocket.addEventListener("close", () => {
+            setSocketState(WebSocket.CLOSED);
+        });
+        setSocket(newSocket);
+        return () => {
+            if (newSocket) {
+                newSocket.close();
+            }
+        };
+    }, []);
 
     return (
         <div>
-            <input
-                type="text"
-                value={messageText} // Bind input value to state
-                onChange={handleInputChange} // Update state on input change
-            />
-            <button onClick={handleSendClick}>Send</button>
+            <h1>Global Chat</h1>
+
+            {socket?.readyState !== WebSocket.OPEN ? (
+                <p>Connection not established</p>
+            ) : (
+                <p></p>
+            )}
+            <>
+                {/* Display the list of messages */}
+                <div>
+                    {messages.length > 0 ? (
+                        messages.map((msg, index) => (
+                            <div key={index}>
+                                <strong>{msg.uid}:</strong> {msg.text}
+                            </div>
+                        ))
+                    ) : (
+                        <p>No messages yet</p>
+                    )}
+                </div>
+
+                {/* Input and Send button */}
+                <input
+                    type="text"
+                    value={messageText} // Bind input value to state
+                    onChange={handleInputChange} // Update state on input change
+                    onKeyDown={handleKeyDown}
+                />
+                <button onClick={handleSendClick}>Send</button>
+            </>
         </div>
     );
-}
+};
 
 export default GlobalChat;
