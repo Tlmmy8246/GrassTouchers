@@ -1,38 +1,40 @@
-import { useLogin } from "api/auth";
+import { login } from "api/auth";
 
 import { useState } from "react";
 
 const Login = () => {
-    const {mutate, isError, isSuccess, isLoading} = useLogin();
+    // const { mutate, isError, isSuccess, isLoading } = useLogin();
     const [userName, setUserName] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
-    const updateUserText = (e) => {
+    const updateUserText = (e: any) => {
         setUserName(e.target.value);
     }
-    const updatePasswordText = (e) => {
+
+    const updatePasswordText = (e: any) => {
         setPassword(e.target.value);
     }
-    const submitBtnClicked = () => {
-        mutate({
-            username: userName,
-            password: password
-        })
+
+    const submitBtnClicked = async () => {
+        const res = await login({ username: userName, password: password });
+        console.log("% LOGIN RES", res);
+        if (res.error) {
+            console.error("% LOGIN ERROR", res.error);
+        }
     }
 
-    console.log("% USER", userName);
-    console.log("% PASSWORD", password);
-
-    if(isError) return console.error("% SOMETHING WENT WRONG NOOO")
-
-    return <div>ඞPlease enter your login information:ඞ<form>
-        <label>User:</label> <br></br>
-        <input type="text" id="username" name="Username" value={userName} onChange={updateUserText}></input><br></br>
-        <label>Password:</label><br></br>
-        <input type="text" id="password" name="Password" value={password} onChange={updatePasswordText}></input><br></br>
-        <input value="Login" onClick={submitBtnClicked}></input>
-        </form></div>
-
+    return (
+        <div>
+            Please enter your login information:
+            <form>
+                <label>User:</label> <br></br>
+                <input type="text" id="username" name="Username" value={userName} onChange={updateUserText}></input><br></br>
+                <label>Password:</label><br></br>
+                <input type="text" id="password" name="Password" value={password} onChange={updatePasswordText}></input><br></br>
+                <button onClick={submitBtnClicked}>Login</button>
+            </form>
+        </div>
+    )
 }
 
 export default Login;
