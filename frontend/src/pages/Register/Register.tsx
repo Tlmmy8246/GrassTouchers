@@ -1,9 +1,14 @@
 import { useState } from 'react'
-import { register } from 'api/auth/useRegister';
+import { useRegister } from 'api/auth';
+import { useUserStore } from 'store/useUserStore';
 
 const Register = () => {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
+
+	const addUserDetails = useUserStore(state => state.addUserDetails);
+
+	const { mutate: register } = useRegister();
 
 	const updateUsername = (e: any) => {
 		setUsername(e.target.value);
@@ -13,13 +18,10 @@ const Register = () => {
 		setPassword(e.target.value);
 	}
 
-	const submitBtnClicked = async (e: any) => {
+	const submitBtnClicked = (e: any) => {
 		e.preventDefault();
-		const res = await register({ username, password });
-		console.log('% REGISTER RES', res);
-		if (res.error) {
-			console.error('% REGISTER ERROR', res.error);
-		}
+		addUserDetails({ username, password });
+		register({ username, password });
 	}
 
 	return (

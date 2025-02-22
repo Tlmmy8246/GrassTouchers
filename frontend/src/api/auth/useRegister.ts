@@ -1,4 +1,9 @@
-import supabase from "utils/supabase";
+import { endpoints } from "global/endpoints";
+import { routePaths } from "global/routePaths";
+import { useMutation } from "react-query";
+import { useNavigate } from "react-router";
+import { useUserStore } from "store/useUserStore";
+import http from "utils/https";
 
 interface IRegisterPostData {
 	username: string;
@@ -6,14 +11,20 @@ interface IRegisterPostData {
 }
 
 export const register = async (postData: IRegisterPostData) => {
-	const { data, error } = await supabase.auth.signUp({
-		email: postData.username,
-		password: postData.password
-	});
+	return http().post(endpoints.auth.register, postData);
+};
 
-	if (error) return { data: null, error, isError: true };
+export const useRegister = () => {
+	const navigate = useNavigate();
+	const clearUserDetails = useUserStore(state => state.clearUserDetails);
 
-	// TODO: Redirect the user to the login page if the data is true
-
-	return { data, error: null, isError: false };
+	return useMutation(register, {
+		onSuccess: () => {
+			navigate(routePaths.auth.login);
+		},
+		onError: (error) => {
+			clearUserDetails();
+			console.error('% REGISTER ERROR', error);
+		}
+	})
 }

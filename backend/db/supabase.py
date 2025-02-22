@@ -4,9 +4,8 @@ import os
 
 load_dotenv()  # take environment variables
 
-
-SUPABASE_URL = os.getenv('FASTAPI_SUPABASE_KEY')
-SUPABASE_KEY = os.getenv('FASTAPI_SUPABASE_URL')
+SUPABASE_KEY = os.getenv('FASTAPI_SUPABASE_KEY')
+SUPABASE_URL = os.getenv('FASTAPI_SUPABASE_URL')
 
 
 if not all([SUPABASE_URL, SUPABASE_KEY]):

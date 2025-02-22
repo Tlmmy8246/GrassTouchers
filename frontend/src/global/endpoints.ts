@@ -2,7 +2,7 @@
 export const endpoints = {
 	auth: {
 		login: '/login',
-		postLogin: '/post-login/'
+		register: '/register'
 	},
 	chat: {
 		duel: {
