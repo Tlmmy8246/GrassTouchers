@@ -18,7 +18,7 @@ const AppRouter = () => {
 
           {/* Protected Routes here */}
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-            <Route path={routePaths.home} element={<div>HOME PAGE HERE</div>} />
+            <Route path={routePaths.home} element={<GlobalChat />} />
             <Route path={routePaths.globalChat} element={<GlobalChat />} />
           </Route>
         </Routes>

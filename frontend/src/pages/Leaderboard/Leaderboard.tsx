@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useFetchLeaderboard } from "api/leaderboard/useLeaderboard";
 import arrow from 'assets/arrow.svg';
 import { Button, FullPageLoader } from "components";
+import { useNavigate } from "react-router";
+import { routePaths } from "global/routePaths";
 
 type TQueryState = 'messages' | 'credits';
 
 const Leaderboard = () => {
+  const navigate = useNavigate();
   const [queryState, setQueryState] = useState<TQueryState>('messages');
 
   const { data, isLoading } = useFetchLeaderboard({
@@ -36,12 +39,16 @@ const Leaderboard = () => {
 
   const isMessages = queryState === 'messages';
 
+  const handleGoBack = () => {
+    navigate(routePaths.globalChat);
+  }
+
   if (isLoading) return <FullPageLoader />;
 
   return (
     <div className="container">
       <div className="p-2">
-        <Button>
+        <Button onClick={handleGoBack}>
           <img src={arrow} alt="arrow" />
         </Button>
         <div className="flex items-center justify-center flex-col mt-16">
