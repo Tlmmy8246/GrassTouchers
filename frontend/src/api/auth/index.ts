@@ -1,4 +1,4 @@
-import { login } from "./useLogin";
-import { register } from "./useRegister";
+import { login, useLogin } from "./useLogin";
+import { register, useRegister } from "./useRegister";
 
-export { login, register };
+export { login, register, useRegister, useLogin };

@@ -4,3 +4,5 @@ uvicorn[standard]
 sqlalchemy
 supabase
 python-dotenv
+bcrypt
+pyjwt

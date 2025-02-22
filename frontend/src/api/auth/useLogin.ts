@@ -1,19 +1,32 @@
-import supabase from "utils/supabase";
+import { endpoints } from "global/endpoints";
+import http from "utils/https";
+import { useMutation } from "react-query";
+import { useNavigate } from "react-router";
+import { routePaths } from "global/routePaths";
+import { useUserStore } from "store/useUserStore";
+import token from "utils/token";
 
 interface ILoginPostData {
 	username: string;
 	password: string;
 }
 
-export const login = async (postData: ILoginPostData) => {
-	const { data, error } = await supabase.auth.signInWithPassword({
-		email: postData.username,
-		password: postData.password
-	});
+export const login = (postData: ILoginPostData) => {
+	return http().post(endpoints.auth.login, postData);
+}
 
-	if (error) return { data: null, error, isError: true };
+export const useLogin = () => {
+	const addUserDetails = useUserStore(state => state.addUserDetails);
+	const navigate = useNavigate();
 
-	// TODO: Save the token to local storage if the data is true
-
-	return { data, error: null, isError: false };
+	return useMutation(login, {
+		onSuccess: (data) => {
+			token.setToken({ accessToken: `Bearer ${data.data.token}` });
+			addUserDetails(data.data);
+			navigate(routePaths.globalChat);
+		},
+		onError: (error) => {
+			console.error('% LOGIN ERROR', error);
+		}
+	})
 }

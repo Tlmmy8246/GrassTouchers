@@ -1,11 +1,21 @@
-import { login } from "api/auth";
+import { useLogin } from "api/auth";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useUserStore } from "store/useUserStore";
 
 const Login = () => {
-    // const { mutate, isError, isSuccess, isLoading } = useLogin();
+    const { mutate: login } = useLogin();
     const [userName, setUserName] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+
+    const user = useUserStore(state => state.user);
+
+    useEffect(() => {
+        if (user?.username && user?.password) {
+            setUserName(user.username);
+            setPassword(user.password);
+        }
+    }, [user])
 
     const updateUserText = (e: any) => {
         setUserName(e.target.value);
@@ -15,12 +25,9 @@ const Login = () => {
         setPassword(e.target.value);
     }
 
-    const submitBtnClicked = async () => {
-        const res = await login({ username: userName, password: password });
-        console.log("% LOGIN RES", res);
-        if (res.error) {
-            console.error("% LOGIN ERROR", res.error);
-        }
+    const submitBtnClicked = (e: any) => {
+        e.preventDefault();
+        login({ username: userName, password: password });
     }
 
     return (
