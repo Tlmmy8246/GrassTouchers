@@ -8,6 +8,7 @@ from db.supabase import create_supabase_client
 import json
 from postgrest.exceptions import APIError
 from messages import Message, MessageType
+from ai.run_model import classify
 
 db_client = create_supabase_client()
 OLD_MESSAGE_LOAD_AMOUNT = 50
@@ -93,8 +94,6 @@ async def login(user: User):
     except:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {"message": "Success"}
-
 
 @app.post("/register")
 async def register(user: User):
@@ -119,7 +118,8 @@ async def leaderboard(query: str = "messages"):
     if query == "messages":
         try:
             response = db_client.table("messages").select("username").execute()
-            responseUsers = db_client.table("users").select("username").execute()
+            responseUsers = db_client.table(
+                "users").select("username").execute()
             message_counts = {}
             result = {}
             for record in response.data:
@@ -143,7 +143,8 @@ async def leaderboard(query: str = "messages"):
     elif query == "credits":
         try:
             response = (
-                db_client.table("users").select("username,anti_social_credit").execute()
+                db_client.table("users").select(
+                    "username,anti_social_credit").execute()
             )
 
             result = {}
@@ -185,13 +186,36 @@ async def websocket_endpoint(websocket: WebSocket):
 
             if authenticated:
                 if message.message_type == MessageType.CHAT:
+                    categories = classify(message.content.text)
+                    dad_joke = categories[0]
+                    nerdy = categories[1]
+                    positive = categories[2]
+                    negative = categories[3]
+                    neutral = categories[4]
+                    brainrot = categories[5]
+
+                    if (dad_joke > nerdy and dad_joke > positive and dad_joke > negative and dad_joke > neutral and dad_joke > brainrot):
+                        most_likely_category = "dad_joke"
+                    elif (nerdy > dad_joke and nerdy > positive and nerdy > negative and nerdy > neutral and nerdy > brainrot):
+                        most_likely_category = "nerdy"
+                    elif (positive > dad_joke and positive > nerdy and positive > negative and positive > neutral and positive > brainrot):
+                        most_likely_category = "positive"
+                    elif (negative > dad_joke and negative > nerdy and negative > positive and negative > neutral and negative > brainrot):
+                        most_likely_category = "negative"
+                    elif (neutral > dad_joke and neutral > nerdy and neutral > positive and neutral > negative and neutral > brainrot):
+                        most_likely_category = "neutral"
+                    elif (brainrot > dad_joke and brainrot > nerdy and brainrot > positive and brainrot > negative and brainrot > neutral):
+                        most_likely_category = "brainrot"
+
                     db_message = {
                         "username": message.username,
                         "text": message.content.text,
                         "timestamp": message.content.timestamp,
+                        "classification": most_likely_category,
                     }
 
-                    response = db_client.table("messages").insert(db_message).execute()
+                    response = db_client.table(
+                        "messages").insert(db_message).execute()
                     db_message["message_id"] = response.data[0]["message_id"]
 
                     await manager.broadcast(json.dumps(db_message))
@@ -234,7 +258,8 @@ async def get_anti_social_credit(username: str):
             raise HTTPException(status_code=404, detail="Invalid username")
         else:
             print(f"Something went wrong: {e}")
-            raise HTTPException(status_code=500, detail="Internal Server Error")
+            raise HTTPException(
+                status_code=500, detail="Internal Server Error")
 
 
 if __name__ == "__main__":
