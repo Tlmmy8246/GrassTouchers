@@ -60,7 +60,6 @@ const GlobalChat = () => {
     const newSocket = new WebSocket("ws://localhost:8000/ws");
     newSocket.addEventListener("message", (event) => {
       const message = JSON.parse(event.data);
-      console.log("Got message:", message)
     //   message.reactions = {};
       setMessages((prevMessages) => [...prevMessages, message]);
     });
@@ -81,7 +80,6 @@ const GlobalChat = () => {
   ];
 
   const handleReactionClick = (msgId: number, reaction: string) => {
-    console.log(messages)
     const messageIndex = messages.findIndex((msg) => msg.message_id === msgId);
 
     if (messageIndex === -1) return;
