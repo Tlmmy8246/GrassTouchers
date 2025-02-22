@@ -5,7 +5,6 @@ import http from 'utils/https';
 import { stringifyQuery } from 'utils/query';
 
 export interface IFetchLeaderboardQuery {
-	// NOTE: Add your query params here
 }
 
 export const fetchLeaderboard = (searchQuery: IFetchLeaderboardQuery) => {
