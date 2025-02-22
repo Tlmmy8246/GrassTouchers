@@ -60,7 +60,7 @@ const GlobalChat = () => {
     const newSocket = new WebSocket("ws://localhost:8000/ws");
     newSocket.addEventListener("message", (event) => {
       const message = JSON.parse(event.data);
-      message.reactions = {};
+    //   message.reactions = {};
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
@@ -80,7 +80,7 @@ const GlobalChat = () => {
   ];
 
   const handleReactionClick = (msgId: number, reaction: string) => {
-    const messageIndex = messages.findIndex((msg) => msg.id === msgId);
+    const messageIndex = messages.findIndex((msg) => msg.message_id === msgId);
 
     if (messageIndex === -1) return;
 
@@ -92,18 +92,37 @@ const GlobalChat = () => {
       reactions[reaction] = [];
     }
 
-    if (reactions[reaction].includes(userData?.username as string)) {
-      reactions[reaction] = reactions[reaction].filter(
-        (user) => user !== userData?.username
-      );
-    } else {
-      reactions[reaction].push(userData?.username as any);
+    if (userData != null) {
+        if (reactions[reaction].includes(userData?.username as string)) {
+            // Remove reaction
+            reactions[reaction] = reactions[reaction].filter(
+                (user) => user !== userData?.username
+            );
+            const formattedMessage = {
+                type: 'remove_reaction',
+                id: msgId,
+                username: userData.username,
+                token: tokenService.getAccessToken(),
+                reaction: reaction 
+            };
+        socket?.send(JSON.stringify(formattedMessage));
+        } else {
+            // Add reaction 
+            reactions[reaction].push(userData?.username as any);
+            const formattedMessage = {
+                type: 'add_reaction',
+                id: msgId,
+                username: userData.username,
+                token: tokenService.getAccessToken(),
+                reaction: reaction 
+            };
+            socket?.send(JSON.stringify(formattedMessage));
+        }
     }
+
 
     newMessages[messageIndex] = { ...message, reactions };
     setMessages(newMessages);
-
-    // TODO: Integrate API to persist reactions
   };
 
   const getFirstLetters = (name: string) => {
@@ -150,10 +169,10 @@ const GlobalChat = () => {
                   </p>
                   {blockMsg.messages.length > 0 &&
                     blockMsg.messages.map((msg, index) => (
-                      <div className='relative' key={msg.id}>
+                      <div className='relative' key={msg.message_id}>
                         <div
                           className='w-full hover:bg-profile-bg/75 p-0.25'
-                          onMouseEnter={() => setHoveredMessage(msg.id)}
+                          onMouseEnter={() => setHoveredMessage(msg.message_id)}
                         >
                           <p
                             key={index}
@@ -177,7 +196,7 @@ const GlobalChat = () => {
                                         : "5hover:scale-110"
                                         }`}
                                       onClick={() =>
-                                        handleReactionClick(msg.id, reaction)
+                                        handleReactionClick(msg.message_id, reaction)
                                       }
                                     >
                                       <img
@@ -200,12 +219,12 @@ const GlobalChat = () => {
                         </div>
 
                         {/* NOTE: Reaction Picker (Appears on hovering a message). */}
-                        {(hoveredMessage === msg.id ||
-                          reactionPanelVisible === msg.id) && (
+                        {(hoveredMessage === msg.message_id ||
+                          reactionPanelVisible === msg.message_id) && (
                             <div
                               className='absolute top-4.5 left-0 mt-2 flex gap-2 bg-profile-bg/80 p-2 rounded-lg shadow-lg z-10'
                               onMouseEnter={() =>
-                                setReactionPanelVisible(msg.id)
+                                setReactionPanelVisible(msg.message_id)
                               }
                               onMouseLeave={() => setReactionPanelVisible(null)}
                             >
@@ -214,7 +233,7 @@ const GlobalChat = () => {
                                   key={i}
                                   className='transition-transform transform hover:scale-110'
                                   onClick={() =>
-                                    handleReactionClick(msg.id, icon.alt)
+                                    handleReactionClick(msg.message_id, icon.alt)
                                   }
                                 >
                                   <img
