@@ -1,9 +1,9 @@
-import { ProtectedRoute } from 'components';
-import { routePaths } from 'global/routePaths';
-import useAuthenticated from 'hooks/useAuthenticated'
-import { Suspense } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router'
-import { Login, Register } from 'pages';
+import { ProtectedRoute } from "components";
+import { routePaths } from "global/routePaths";
+import useAuthenticated from "hooks/useAuthenticated";
+import { Suspense } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
+import { Login, Register, GlobalChat } from "pages";
 
 const AppRouter = () => {
   const { isAuthenticated } = useAuthenticated();
@@ -18,12 +18,12 @@ const AppRouter = () => {
           {/* Protected Routes here */}
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
             <Route path={routePaths.home} element={<div>HOME PAGE HERE</div>} />
-            <Route path={routePaths.globalChat} element={<div>GLOBAL CHAT PAGE HERE</div>} />
+            <Route path={routePaths.globalChat} element={<GlobalChat />} />
           </Route>
         </Routes>
       </BrowserRouter>
     </Suspense>
-  )
-}
+  );
+};
 
-export default AppRouter
+export default AppRouter;
