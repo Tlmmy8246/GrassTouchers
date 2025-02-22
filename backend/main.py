@@ -7,6 +7,7 @@ import uvicorn
 from db.supabase import create_supabase_client
 import json
 from postgrest.exceptions import APIError
+from messages import Message, MessageType
 
 db_client = create_supabase_client()
 OLD_MESSAGE_LOAD_AMOUNT = 50
@@ -160,26 +161,28 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            try:
-                authenticated_message = json.loads(data)
-                message = authenticated_message["message"]
-                if "token" in authenticated_message.keys():
-                    username = verify_token(authenticated_message["token"][7:])
-                    if username != message["username"]:
-                        raise HTTPException(
-                            status_code=401,
-                            detail="Invalid token, please reauthenticate!",
-                        )
-                    else:
-                        response = db_client.table(
-                            "messages").insert(message).execute()
-                        await manager.broadcast(json.dumps(message))
-                else:
-                    raise HTTPException(
-                        status_code=401, detail="Invalid token, please reauthenticate!"
-                    )
-            except APIError as error:
-                print("Failed to send message, tell the client probably", error)
+
+            message = Message.from_json(data)
+            authenticated = verify_token(message.token) == message.username
+
+            if authenticated:
+                if message.message_type == MessageType.CHAT:
+                    db_message = {
+                        "username": message.username,
+                        "text": message.content.text,
+                        "timestamp": message.content.timestamp
+                    }
+
+                    response = db_client.table(
+                    "messages").insert(db_message).execute()
+                    print(response)
+                    db_message['message_id'] = response.data[0]['message_id']
+                    await manager.broadcast(json.dumps(db_message))
+                elif message.message_type == MessageType.REACTION:
+                    pass
+            else:
+                raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
+                
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)

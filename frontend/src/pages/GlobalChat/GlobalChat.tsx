@@ -38,19 +38,16 @@ const GlobalChat = () => {
 
   const handleSendClick = () => {
     if (userData != null) {
-      const message: IMessage = {
-        id: 0,
+      const formattedMessage = {
+        type: 'chat',
+        id: -1,
         text: messageText,
         timestamp: Date.now(),
         username: userData.username,
-        reactions: {}
-      };
-      const authenticatedMessage = {
-        message: message,
-        token: tokenService.getAccessToken(),
+        token: tokenService.getAccessToken()
       };
       setMessageText(""); // Clear input after sending
-      socket?.send(JSON.stringify(authenticatedMessage));
+      socket?.send(JSON.stringify(formattedMessage));
     }
   };
 
@@ -251,7 +248,7 @@ const GlobalChat = () => {
           onChange={handleInputChange}
           className='pl-2'
         />
-        <Button type='submit' onClick={handleSendClick}>
+        <Button type='submit'>
           Send
         </Button>
       </form>
