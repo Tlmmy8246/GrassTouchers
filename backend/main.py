@@ -1,12 +1,11 @@
 from models.models import Message, User
 from utils.encrypt import hash_password, verify_password
-from utils.jwt import create_access_token
+from utils.jwt import create_access_token, verify_token
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from db.supabase import create_supabase_client
 import json
-import postgrest
 from postgrest.exceptions import APIError
 
 db_client = create_supabase_client()
@@ -124,17 +123,25 @@ async def send_old_messages(websocket: WebSocket):
             await manager.send_personal_message(json.dumps(message), websocket)
 
 
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     await send_old_messages(websocket)
     try:
         while True:
             data = await websocket.receive_text()
             try:
-                message = json.loads(data)
-                response = db_client.table("messages").insert(message).execute()
-                await manager.broadcast(data)
+                authenticated_message = json.loads(data)
+                message = authenticated_message['message']
+                if 'token' in authenticated_message.keys():
+                    username = verify_token(authenticated_message['token'][7:])
+                    if username != message['username']:
+                        raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
+                    else:
+                        response = db_client.table("messages").insert(message).execute()
+                        await manager.broadcast(json.dumps(message)) 
+                else:
+                    raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
             except APIError as error:
                 print("Failed to send message, tell the client probably", error)
 

@@ -1,28 +1,34 @@
 import { useState, useEffect } from "react";
+import { useUserStore } from "store/useUserStore";
+import tokenService from 'utils/token'
 
 const GlobalChat = () => {
     // State to store the input value
     const [messageText, setMessageText] = useState<string>("");
     const [messages, setMessages] = useState<IMessage[]>([]);
     const [socketState, setSocketState] = useState<number | null>(null);
-
-    const username = "test"; // TODO: Put the user's actual user id here
-    const token = "1"   // TODO: I imagine this could be some kind of auth thing
-
     const [socket, setSocket] = useState<WebSocket | null>(null);
+    
+    const userData = useUserStore(state => state.user);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessageText(e.target.value);
     };
 
     const handleSendClick = () => {
-        const message: IMessage = {
-            text: messageText,
-            timestamp: Date.now(),
-            username: username
-        };
-        setMessageText(""); // Clear input after sending
-        socket?.send(JSON.stringify(message));
+        if (userData != null) {
+            const message: IMessage = {
+                text: messageText,
+                timestamp: Date.now(),
+                username: userData.username
+            };
+            const authenticatedMessage = {
+                "message": message,
+                "token": tokenService.getAccessToken()
+            }
+            setMessageText(""); // Clear input after sending
+            socket?.send(JSON.stringify(authenticatedMessage));
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -32,7 +38,7 @@ const GlobalChat = () => {
     };
 
     useEffect(() => {
-        const newSocket = new WebSocket("ws://localhost:8000/ws/"+token);
+        const newSocket = new WebSocket("ws://localhost:8000/ws");
         newSocket.addEventListener("message", (event) => {
             const message = JSON.parse(event.data);
             setMessages((prevMessages) => [...prevMessages, message]);
