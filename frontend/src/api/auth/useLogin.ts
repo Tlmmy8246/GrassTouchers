@@ -29,7 +29,7 @@ export const useLogin = () => {
     },
     onError: (error) => {
       console.error("% LOGIN ERROR", error);
-      toast.error(error?.detail || "An error occurred. Please try again.");
+      toast.error((error as any)?.detail || "An error occurred. Please try again.");
     },
   });
 };

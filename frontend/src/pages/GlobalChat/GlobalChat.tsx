@@ -2,7 +2,6 @@ import { Button, Input } from "components";
 import { useState, useEffect } from "react";
 import { useUserStore } from "store/useUserStore";
 import tokenService from "utils/token";
-import toast from "react-hot-toast";
 import heart from "assets/heart.svg";
 import fire from "assets/fire.svg";
 import angy from "assets/angy.svg";
@@ -22,7 +21,6 @@ interface IMessage {
 const GlobalChat = () => {
   const [messageText, setMessageText] = useState<string>("");
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [socketState, setSocketState] = useState<number | null>(null);
   const [hoveredMessage, setHoveredMessage] = useState<number | null>(null);
   const [reactionPanelVisible, setReactionPanelVisible] = useState<
     number | null
@@ -42,6 +40,7 @@ const GlobalChat = () => {
         text: messageText,
         timestamp: Date.now(),
         username: userData.username,
+        reactions: {}
       };
       const authenticatedMessage = {
         message: message,
@@ -91,12 +90,12 @@ const GlobalChat = () => {
           reactions[reaction] = [];
         }
 
-        if (reactions[reaction].includes(username)) {
+        if (reactions[reaction].includes(userData?.username as string)) {
           reactions[reaction] = reactions[reaction].filter(
-            (user) => user !== username
+            (user) => user !== userData?.username
           );
         } else {
-          reactions[reaction].push(username);
+          reactions[reaction].push(userData?.username as any);
         }
 
         return { ...msg, reactions };
@@ -173,11 +172,10 @@ const GlobalChat = () => {
                                   .map(([reaction, users], i) => (
                                     <button
                                       key={i}
-                                      className={`flex items-center space-x-1 transition-transform transform ${
-                                        users.includes(username)
-                                          ? "scale-110 text-profile-bg/80"
-                                          : "5hover:scale-110"
-                                      }`}
+                                      className={`flex items-center space-x-1 transition-transform transform ${users.includes(userData?.username as any)
+                                        ? "scale-110 text-profile-bg/80"
+                                        : "5hover:scale-110"
+                                        }`}
                                       onClick={() =>
                                         handleReactionClick(index, reaction)
                                       }
@@ -204,30 +202,30 @@ const GlobalChat = () => {
                         {/* NOTE: Reaction Picker (Appears on hovering a message). */}
                         {(hoveredMessage === msg.timestamp ||
                           reactionPanelVisible === msg.timestamp) && (
-                          <div
-                            className='absolute top-4.5 left-0 mt-2 flex gap-2 bg-profile-bg/80 p-2 rounded-lg shadow-lg z-10'
-                            onMouseEnter={() =>
-                              setReactionPanelVisible(msg.timestamp)
-                            }
-                            onMouseLeave={() => setReactionPanelVisible(null)}
-                          >
-                            {reactionIcons.map((icon, i) => (
-                              <button
-                                key={i}
-                                className='transition-transform transform hover:scale-110'
-                                onClick={() =>
-                                  handleReactionClick(index, icon.alt)
-                                }
-                              >
-                                <img
-                                  src={icon.src}
-                                  alt={icon.alt}
-                                  className='w-5 h-5 cursor-pointer'
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                            <div
+                              className='absolute top-4.5 left-0 mt-2 flex gap-2 bg-profile-bg/80 p-2 rounded-lg shadow-lg z-10'
+                              onMouseEnter={() =>
+                                setReactionPanelVisible(msg.timestamp)
+                              }
+                              onMouseLeave={() => setReactionPanelVisible(null)}
+                            >
+                              {reactionIcons.map((icon, i) => (
+                                <button
+                                  key={i}
+                                  className='transition-transform transform hover:scale-110'
+                                  onClick={() =>
+                                    handleReactionClick(index, icon.alt)
+                                  }
+                                >
+                                  <img
+                                    src={icon.src}
+                                    alt={icon.alt}
+                                    className='w-5 h-5 cursor-pointer'
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          )}
                       </div>
                     ))}
                 </div>
