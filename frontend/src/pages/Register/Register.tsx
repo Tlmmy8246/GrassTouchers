@@ -52,7 +52,7 @@ const Register = () => {
 					<div className="flex flex-col md:gap-15 mb-2 md:flex-row">
 						<label>User:</label>
 						<div className="w-full ml-0 md:ml-15">
-							<Input className="font-bold" type="text" id="username" {...register("username", { required: true })} />
+							<Input className="font-bold" type="text" id="username" {...register("username", { required: true, maxLength: 15 })} />
 							{errors.username && <span className="ml-4 text-lg text-red-700">This field is required</span>}
 						</div>
 					</div>
