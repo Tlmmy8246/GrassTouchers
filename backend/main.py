@@ -30,6 +30,7 @@ class ConnectionManager:
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
+            print(connection)
             await connection.send_text(message)
 
 
@@ -237,6 +238,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         "messages").insert(db_message).execute()
                     db_message["message_id"] = response.data[0]["message_id"]
 
+
+                    
                     await manager.broadcast(json.dumps(db_message))
                 elif message.message_type == MessageType.ADD_REACTION:
                     db_message = {
