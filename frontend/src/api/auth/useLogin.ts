@@ -21,7 +21,7 @@ export const useLogin = () => {
 
 	return useMutation(login, {
 		onSuccess: (data) => {
-			token.setToken({ accessToken: `Bearer ${data.data.token}` });
+			token.setToken({ accessToken: data.data.token });
 			addUserDetails(data.data);
 			navigate(routePaths.globalChat);
 		},
