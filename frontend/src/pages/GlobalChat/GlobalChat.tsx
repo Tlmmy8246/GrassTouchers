@@ -1,4 +1,6 @@
+import { Button, Input } from "components";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 
 const GlobalChat = () => {
     // State to store the input value
@@ -25,23 +27,23 @@ const GlobalChat = () => {
         socket?.send(JSON.stringify(message));
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-            handleSendClick();
-        }
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        handleSendClick();
     };
 
     useEffect(() => {
-        const newSocket = new WebSocket("ws://localhost:8000/ws/"+token);
+        const newSocket = new WebSocket("ws://localhost:8000/ws/" + token);
         newSocket.addEventListener("message", (event) => {
             const message = JSON.parse(event.data);
             setMessages((prevMessages) => [...prevMessages, message]);
         });
-        newSocket.addEventListener("open", (event) => {
+        newSocket.addEventListener("open", () => {
             setSocketState(WebSocket.OPEN);
         });
         newSocket.addEventListener("error", () => {
-            setSocketState(WebSocket.CLOSING); 
+            toast.error("Error connecting to server. Please try entering your message later!");
+            setSocketState(WebSocket.CLOSING);
         });
         newSocket.addEventListener("close", () => {
             setSocketState(WebSocket.CLOSED);
@@ -78,13 +80,15 @@ const GlobalChat = () => {
                 </div>
 
                 {/* Input and Send button */}
-                <input
-                    type="text"
-                    value={messageText} // Bind input value to state
-                    onChange={handleInputChange} // Update state on input change
-                    onKeyDown={handleKeyDown}
-                />
-                <button onClick={handleSendClick}>Send</button>
+                <form className="flex input-shadow fixed bottom-0 w-full" onSubmit={handleFormSubmit}>
+                    <Input
+                        type="text"
+                        value={messageText} // Bind input value to state
+                        onChange={handleInputChange} // Update state on input change
+                    // onKeyDown={handleKeyDown}
+                    />
+                    <Button type="submit" onClick={handleSendClick}>Send</Button>
+                </form>
             </>
         </div>
     );

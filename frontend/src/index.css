@@ -13,12 +13,16 @@
   background-image: url("./assets/grass_background_2.gif");
 }
 
-.register-container{
+.register-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
   background-image: url("./assets/grass_background.gif");
+}
+
+.input-shadow {
+  box-shadow: 0px 4px 4px 0px #00000040;
 }
 
 
