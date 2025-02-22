@@ -1,11 +1,11 @@
-import { useUserStore } from "store/useUserStore"
+import { useUserStore } from "store/useUserStore";
+import tokenService from 'utils/token';
 
 const useAuthenticated = () => {
-  const user = useUserStore(state => state.user); // TODO: LATER CHECK FOR ACCESS_TOKEN AND SENDING AN API REQUEST TO CHECK IF THE TOKEN IS VALI
+  const user = useUserStore(state => state.user);
 
-  // const isAuthenticated = !!user;
-  const isAuthenticated = true;
-  
+  const isAuthenticated = !!user?.username && !!tokenService.getAccessToken();
+
   return { isAuthenticated };
 }
 
