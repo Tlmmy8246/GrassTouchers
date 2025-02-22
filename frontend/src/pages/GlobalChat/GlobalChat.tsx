@@ -1,4 +1,4 @@
-import { Button, Input } from "components";
+import { Button, Input, Navbar } from "components";
 import { useState, useEffect } from "react";
 import { useUserStore } from "store/useUserStore";
 import tokenService from "utils/token";
@@ -131,8 +131,7 @@ const GlobalChat = () => {
 
   return (
     <div className='container'>
-      <h1>Global Chat</h1>
-
+      <Navbar />
       {socket?.readyState !== WebSocket.OPEN && (
         <p>Connection not established</p>
       )}
