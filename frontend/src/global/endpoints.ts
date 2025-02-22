@@ -15,5 +15,6 @@ export const endpoints = {
 	money: {
 		gbucks: '/antiSocialCredit/{username}'
 	},
+	grass: '/grass/{username}',
 	leaderboard: '/leaderboard'
 }
