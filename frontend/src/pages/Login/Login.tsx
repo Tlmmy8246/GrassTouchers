@@ -1,9 +1,11 @@
 import { useLogin } from "api/auth";
-
 import { useEffect } from "react";
 import { useUserStore } from "store/useUserStore";
 import { Button, Input } from "components";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
+import tokenService from 'utils/token';
+import { routePaths } from "global/routePaths";
 
 interface LoginFormData {
     username: string;
@@ -11,6 +13,7 @@ interface LoginFormData {
 }
 
 const Login = () => {
+    const navigate = useNavigate();
     const { mutate: login } = useLogin();
     const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginFormData>();
 
@@ -23,13 +26,19 @@ const Login = () => {
         }
     }, [user])
 
+    useEffect(() => {
+        if (tokenService.getAccessToken()) {
+            navigate(routePaths.globalChat);
+        }
+    }, [])
+
     const onSubmit = (data: LoginFormData) => {
         login(data);
     }
 
     return (
         <div className="login-container">
-            <div className="bg-gray-800/50 text-xl p-6 rounded-lg w-[75%]">
+            <div className="bg-gray-800/80 text-xl p-6 rounded-lg w-[75%] text-gray-100">
                 <h1 className="text-3xl mb-5">Please enter your login information:</h1>
                 <form className="flex flex-col justify-center text-2xl" onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex gap-15 mb-2">
