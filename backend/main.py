@@ -36,8 +36,9 @@ app = FastAPI()
 manager = ConnectionManager()
 
 origins = [
-    "http://localhost",
-    "http://localhost:3000",  # This should be your frontend URL
+    # "http://localhost",
+    # "http://localhost:3000",  # This should be your frontend URL
+    '*'
 ]
 
 app.add_middleware(
@@ -141,7 +142,8 @@ async def websocket_endpoint(websocket: WebSocket):
                             detail="Invalid token, please reauthenticate!",
                         )
                     else:
-                        response = db_client.table("messages").insert(message).execute()
+                        response = db_client.table(
+                            "messages").insert(message).execute()
                         await manager.broadcast(json.dumps(message))
                 else:
                     raise HTTPException(
