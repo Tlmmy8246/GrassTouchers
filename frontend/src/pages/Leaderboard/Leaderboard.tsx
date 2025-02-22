@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useFetchLeaderboard } from "api/leaderboard/useLeaderboard";
 import arrow from 'assets/arrow.svg';
-import { Button } from "components";
+import { Button, FullPageLoader } from "components";
 
 type TQueryState = 'messages' | 'credits';
 
 const Leaderboard = () => {
   const [queryState, setQueryState] = useState<TQueryState>('messages');
 
-  const { data } = useFetchLeaderboard({
+  const { data, isLoading } = useFetchLeaderboard({
     query: queryState
   });
 
@@ -25,16 +25,18 @@ const Leaderboard = () => {
     return `${truncated.replace(/\.0$/, '')}${suffixes[magnitude]}`;
   }
 
-  // Example users array
-  const users = [
-    { name: "Alfreds Futterkiste", socialCredit: 120 },
-    { name: "Centro comercial", socialCredit: 95 },
-    { name: "Maria Anders", socialCredit: 85 },
-  ];
-
-  const truncatedUsers = users.slice(0, 10);
+  const transformData = (data: any) => {
+    return Object.keys(data).map((key) => {
+      return {
+        name: key,
+        socialCredit: data[key]
+      }
+    }).sort((a, b) => b.socialCredit - a.socialCredit).slice(0, 10);
+  }
 
   const isMessages = queryState === 'messages';
+
+  if (isLoading) return <FullPageLoader />;
 
   return (
     <div className="container">
@@ -51,7 +53,7 @@ const Leaderboard = () => {
           </div>
 
           <div className="flex flex-col gap-3 w-2/3 mt-10">
-            {truncatedUsers?.map((user, index) => (
+            {transformData(data?.payload || {})?.map((user, index) => (
               <div key={index} className="flex items-center justify-between w-full bg-gray-300 p-2 text-2xl">
                 <div className="bg-gray-300 flex gap-2 items-center">
                   <div className="bg-black h-10 w-10 p-2 flex items-center justify-center">
