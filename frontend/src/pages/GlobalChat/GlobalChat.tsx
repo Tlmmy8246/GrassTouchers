@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSendMessage } from "api/chat"; // Assuming this is the hook to send the message
 
 const GlobalChat = () => {
     // State to store the input value
@@ -7,12 +6,11 @@ const GlobalChat = () => {
     const [messages, setMessages] = useState<IMessage[]>([]);
     const [socketState, setSocketState] = useState<number | null>(null);
 
-    const uid = "user1"; // TODO: Put the user's actual user id here
+    const username = "test"; // TODO: Put the user's actual user id here
     const token = "1"   // TODO: I imagine this could be some kind of auth thing
 
     const [socket, setSocket] = useState<WebSocket | null>(null);
 
-    // Handle input changes
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessageText(e.target.value);
     };
@@ -21,7 +19,7 @@ const GlobalChat = () => {
         const message: IMessage = {
             text: messageText,
             timestamp: Date.now(),
-            uid: uid
+            username: username
         };
         setMessageText(""); // Clear input after sending
         socket?.send(JSON.stringify(message));
@@ -71,7 +69,7 @@ const GlobalChat = () => {
                     {messages.length > 0 ? (
                         messages.map((msg, index) => (
                             <div key={index}>
-                                <strong>{msg.uid}:</strong> {msg.text}
+                                <strong>{msg.username}:</strong> {msg.text}
                             </div>
                         ))
                     ) : (
