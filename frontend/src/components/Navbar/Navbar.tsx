@@ -3,6 +3,7 @@ import tropy from 'assets/tropy.svg';
 import useMediaQuery from "hooks/useMediaQuery";
 import { useNavigate } from "react-router";
 import { routePaths } from "global/routePaths";
+import tokenService from "utils/token";
 
 const Navbar = () => {
 	const isMobile = useMediaQuery("(max-width: 768px)");
@@ -24,9 +25,14 @@ const Navbar = () => {
 		// TODO: Implement send all
 	}
 
+	const handleLogout = () => {
+		tokenService.clearToken();
+		navigate(routePaths.auth.login);
+	}
+
 	return (
 		<nav>
-			<div className="mx-auto flex gap-3 justify-center items-center p-2" >
+			<div className="mx-auto flex flex-wrap gap-3 justify-center items-center p-2" >
 				<Button className="min-w-fit whitespace-normal w-fit" title="Leaderboard" onClick={handleLeaderboardClick}>
 					<img src={tropy} alt="Tropy" className="w-6 h-6" />
 				</Button>
@@ -41,6 +47,9 @@ const Navbar = () => {
 				</Button>
 				<Button className="w-fit md:w-full" onClick={handleSendAllClick}>
 					Send All
+				</Button>
+				<Button className="w-fit md:w-full" onClick={handleLogout}>
+					Logout
 				</Button>
 			</div>
 		</nav>

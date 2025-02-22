@@ -11,3 +11,4 @@ Message:
 - Usernamme (unique)
 - Timestamp 
 - Content 
+- Add logout functionality
