@@ -39,7 +39,7 @@ manager = ConnectionManager()
 origins = [
     # "http://localhost",
     # "http://localhost:3000",  # This should be your frontend URL
-    '*'
+    "*"
 ]
 
 app.add_middleware(
@@ -59,6 +59,11 @@ async def root():
 log = []
 
 """ AUTHENTICATION STUFF STARTS HERE """
+
+
+@app.post("/logout")
+async def logout():
+    return {"message": "Success"}
 
 
 @app.post("/login")
@@ -113,14 +118,12 @@ async def register(user: User):
 async def leaderboard(query: str = "messages"):
     if query == "messages":
         try:
-            response = (db_client.table("messages").select("username").execute()
-                        )
-            responseUsers = (db_client.table(
-                "users").select("username").execute())
+            response = db_client.table("messages").select("username").execute()
+            responseUsers = db_client.table("users").select("username").execute()
             message_counts = {}
             result = {}
             for record in response.data:
-                username = record['username']
+                username = record["username"]
                 if username in message_counts:
                     message_counts[username] += 1
                 else:
@@ -130,7 +133,7 @@ async def leaderboard(query: str = "messages"):
                 result[username] = count
 
             for record in responseUsers.data:
-                username = record['username']
+                username = record["username"]
                 if username not in result:
                     result[username] = 0
 
@@ -139,15 +142,14 @@ async def leaderboard(query: str = "messages"):
             print("Rats", e)
     elif query == "credits":
         try:
-            response = (db_client.table("users")
-                        .select("username,anti_social_credit")
-                        .execute()
-                        )
+            response = (
+                db_client.table("users").select("username,anti_social_credit").execute()
+            )
 
             result = {}
 
             for record in response.data:
-                result[record['username']] = record['anti_social_credit']
+                result[record["username"]] = record["anti_social_credit"]
 
             return {"payload": result}
         except APIError as e:
@@ -186,19 +188,19 @@ async def websocket_endpoint(websocket: WebSocket):
                     db_message = {
                         "username": message.username,
                         "text": message.content.text,
-                        "timestamp": message.content.timestamp
+                        "timestamp": message.content.timestamp,
                     }
 
-                    response = db_client.table(
-                    "messages").insert(db_message).execute()
-                    print(response)
-                    db_message['message_id'] = response.data[0]['message_id']
+                    response = db_client.table("messages").insert(db_message).execute()
+                    db_message["message_id"] = response.data[0]["message_id"]
+
                     await manager.broadcast(json.dumps(db_message))
                 elif message.message_type == MessageType.REACTION:
                     pass
             else:
-                raise HTTPException(status_code=401, detail="Invalid token, please reauthenticate!")
-                
+                raise HTTPException(
+                    status_code=401, detail="Invalid token, please reauthenticate!"
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -222,15 +224,17 @@ async def get_anti_social_credit(username: str):
         if not response.data:
             raise HTTPException(status_code=404, detail="Invalid username")
 
-        return {"username": username, "anti_social_credit": response.data[0]["anti_social_credit"]}
+        return {
+            "username": username,
+            "anti_social_credit": response.data[0]["anti_social_credit"],
+        }
 
     except Exception as e:
         if e.status_code == 404:
             raise HTTPException(status_code=404, detail="Invalid username")
         else:
             print(f"Something went wrong: {e}")
-            raise HTTPException(
-                status_code=500, detail="Internal Server Error")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 if __name__ == "__main__":
