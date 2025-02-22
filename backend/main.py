@@ -176,7 +176,6 @@ async def send_old_messages(websocket: WebSocket):
         for reaction in reactions.data:
             for message in messages.data:
                 if reaction['message_id'] == message['message_id']:
-                    print("Found",reaction['reaction'],"for",message['message_id'])
                     decoded_reaction = decode_reaction(reaction['reaction'])
                     if 'reactions' not in message.keys():
                         message['reactions'] = {}
@@ -297,8 +296,6 @@ async def get_anti_social_credit(username: str):
             .eq("username", username)
             .execute()
         )
-
-        print("Here's the response.data: ", response.data)
 
         if not response.data:
             raise HTTPException(status_code=404, detail="Invalid username")

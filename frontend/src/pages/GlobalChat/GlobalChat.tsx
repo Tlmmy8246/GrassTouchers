@@ -13,6 +13,7 @@ import cross from "assets/x.svg";
 
 interface IMessage {
   id: number;
+  message_id: number;
   text: string;
   timestamp: number;
   username: string;
