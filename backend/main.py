@@ -30,6 +30,7 @@ class ConnectionManager:
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
+            print(connection)
             await connection.send_text(message)
 
 
@@ -118,8 +119,7 @@ async def leaderboard(query: str = "messages"):
     if query == "messages":
         try:
             response = db_client.table("messages").select("username").execute()
-            responseUsers = db_client.table(
-                "users").select("username").execute()
+            responseUsers = db_client.table("users").select("username").execute()
             message_counts = {}
             result = {}
             for record in response.data:
@@ -143,8 +143,7 @@ async def leaderboard(query: str = "messages"):
     elif query == "credits":
         try:
             response = (
-                db_client.table("users").select(
-                    "username,anti_social_credit").execute()
+                db_client.table("users").select("username,anti_social_credit").execute()
             )
 
             result = {}
@@ -175,16 +174,14 @@ async def send_old_messages(websocket: WebSocket):
         )
         for reaction in reactions.data:
             for message in messages.data:
-                if reaction['message_id'] == message['message_id']:
-                    print("Found", reaction['reaction'],
-                          "for", message['message_id'])
-                    decoded_reaction = decode_reaction(reaction['reaction'])
-                    if 'reactions' not in message.keys():
-                        message['reactions'] = {}
-                    if decoded_reaction not in message['reactions'].keys():
-                        message['reactions'][decoded_reaction] = []
-                    message['reactions'][decoded_reaction].append(
-                        reaction['username'])
+                if reaction["message_id"] == message["message_id"]:
+                    print("Found", reaction["reaction"], "for", message["message_id"])
+                    decoded_reaction = decode_reaction(reaction["reaction"])
+                    if "reactions" not in message.keys():
+                        message["reactions"] = {}
+                    if decoded_reaction not in message["reactions"].keys():
+                        message["reactions"][decoded_reaction] = []
+                    message["reactions"][decoded_reaction].append(reaction["username"])
 
         # print("Messages with reactions:", messages)
 
@@ -216,17 +213,53 @@ async def websocket_endpoint(websocket: WebSocket):
                     neutral = categories[4]
                     brainrot = categories[5]
 
-                    if (dad_joke > nerdy and dad_joke > positive and dad_joke > negative and dad_joke > neutral and dad_joke > brainrot):
+                    if (
+                        dad_joke > nerdy
+                        and dad_joke > positive
+                        and dad_joke > negative
+                        and dad_joke > neutral
+                        and dad_joke > brainrot
+                    ):
                         most_likely_category = "dad_joke"
-                    elif (nerdy > dad_joke and nerdy > positive and nerdy > negative and nerdy > neutral and nerdy > brainrot):
+                    elif (
+                        nerdy > dad_joke
+                        and nerdy > positive
+                        and nerdy > negative
+                        and nerdy > neutral
+                        and nerdy > brainrot
+                    ):
                         most_likely_category = "nerdy"
-                    elif (positive > dad_joke and positive > nerdy and positive > negative and positive > neutral and positive > brainrot):
+                    elif (
+                        positive > dad_joke
+                        and positive > nerdy
+                        and positive > negative
+                        and positive > neutral
+                        and positive > brainrot
+                    ):
                         most_likely_category = "positive"
-                    elif (negative > dad_joke and negative > nerdy and negative > positive and negative > neutral and negative > brainrot):
+                    elif (
+                        negative > dad_joke
+                        and negative > nerdy
+                        and negative > positive
+                        and negative > neutral
+                        and negative > brainrot
+                    ):
                         most_likely_category = "negative"
-                    elif (neutral > dad_joke and neutral > nerdy and neutral > positive and neutral > negative and neutral > brainrot):
+                    elif (
+                        neutral > dad_joke
+                        and neutral > nerdy
+                        and neutral > positive
+                        and neutral > negative
+                        and neutral > brainrot
+                    ):
                         most_likely_category = "neutral"
-                    elif (brainrot > dad_joke and brainrot > nerdy and brainrot > positive and brainrot > negative and brainrot > neutral):
+                    elif (
+                        brainrot > dad_joke
+                        and brainrot > nerdy
+                        and brainrot > positive
+                        and brainrot > negative
+                        and brainrot > neutral
+                    ):
                         most_likely_category = "brainrot"
 
                     db_message = {
@@ -236,8 +269,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "classification": most_likely_category,
                     }
 
-                    response = db_client.table(
-                        "messages").insert(db_message).execute()
+                    response = db_client.table("messages").insert(db_message).execute()
                     db_message["message_id"] = response.data[0]["message_id"]
 
                     await manager.broadcast(json.dumps(db_message))
@@ -245,10 +277,9 @@ async def websocket_endpoint(websocket: WebSocket):
                     db_message = {
                         "username": message.username,
                         "message_id": message.content.id,
-                        "reaction": parse_reaction(message.content.reaction)
+                        "reaction": parse_reaction(message.content.reaction),
                     }
-                    response = db_client.table(
-                        "reactions").insert(db_message).execute()
+                    response = db_client.table("reactions").insert(db_message).execute()
                     # Add coins to the client
                     # Get number of coins
                     response = (
@@ -259,9 +290,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     )
                     credits = response.data[0]["anti_social_credit"]
                     credits += 100
-                    db_message = {
-                        "username"
-                    }
+                    db_message = {"username"}
                     response = (
                         db_client.table("users")
                         .update({"anti_social_credit": credits})
@@ -271,13 +300,14 @@ async def websocket_endpoint(websocket: WebSocket):
 
                     # TODO: Forward this to clients
                 elif message.message_type == MessageType.REMOVE_REACTION:
-                    response = (db_client.table("reactions")
-                                .delete()
-                                .eq("username", message.username)
-                                .eq("message_id", message.content.id)
-                                .eq("reaction", parse_reaction(message.content.reaction))
-                                .execute()
-                                )
+                    response = (
+                        db_client.table("reactions")
+                        .delete()
+                        .eq("username", message.username)
+                        .eq("message_id", message.content.id)
+                        .eq("reaction", parse_reaction(message.content.reaction))
+                        .execute()
+                    )
                     # TODO: Forward this to clients
             else:
                 raise HTTPException(
@@ -301,8 +331,6 @@ async def get_anti_social_credit(username: str):
             .execute()
         )
 
-        print("Here's the response.data: ", response.data)
-
         if not response.data:
             raise HTTPException(status_code=404, detail="Invalid username")
 
@@ -313,8 +341,7 @@ async def get_anti_social_credit(username: str):
             raise HTTPException(status_code=404, detail="Invalid username")
         else:
             print(f"Something went wrong: {e}")
-            raise HTTPException(
-                status_code=500, detail="Internal Server Error")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 """GRASS CODE IS HERE"""
@@ -339,8 +366,8 @@ async def grass_status(username: str):
                 raise HTTPException(status_code=404, detail="Invalid username")
             else:
                 print(f"Something went wrong: {e}")
-                raise HTTPException(
-                    status_code=500, detail="Internal Server Error")
+                raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 # adds more grass, does not grow the grass that already exists
 # number of grass to plant is based on AI assessment of cringe
@@ -359,24 +386,27 @@ async def plant_grass(username: str, num_grass_to_plant: int = 1):
             )
             if not response.data:  # user has no grass records, start grass growth
                 db_client.table("grass").insert(
-                    {"username": username,
-                     "x_coord": (int)(random.random() * 100),
-                     "y_coord": (int)(random.random() * 100),
-                     "grass_number": 1,
-                     "size": (int)(random.random() * 15) + 5,  # range of 5-20
-                     # 100 +/- 20
-                     "growth_rate": (int)(random.random() * 20) + 100}
+                    {
+                        "username": username,
+                        "x_coord": (int)(random.random() * 100),
+                        "y_coord": (int)(random.random() * 100),
+                        "grass_number": 1,
+                        "size": (int)(random.random() * 15) + 5,  # range of 5-20
+                        # 100 +/- 20
+                        "growth_rate": (int)(random.random() * 20) + 100,
+                    }
                 ).execute()
             else:
                 db_client.table("grass").update(
-                    {"grass_number": response.data[0]
-                        ["grass_number"] + (int)(num_grass_to_plant)}
-                ).eq("username", username
-                     ).execute()
+                    {
+                        "grass_number": response.data[0]["grass_number"]
+                        + (int)(num_grass_to_plant)
+                    }
+                ).eq("username", username).execute()
         except Exception as e:
             print(f"Something went wrong: {e}")
-            raise HTTPException(
-                status_code=500, detail="Internal Server Error")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 # grow the grass that already exists, does not add more grass
 
@@ -396,12 +426,10 @@ async def remove_grass(username: str):
             else:
                 db_client.table("grass").update(
                     {"grass_number": response.data[0]["grass_number"] - 1}
-                ).eq("username", username
-                     ).execute()
+                ).eq("username", username).execute()
         except Exception as e:
             print(f"Something went wrong: {e}")
-            raise HTTPException(
-                status_code=500, detail="Internal Server Error")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 @app.patch("/grass/{username}")
@@ -418,14 +446,14 @@ async def grow_grass(username: str):
                 plant_grass(username)
             else:
                 db_client.table("grass").update(
-                    {"size": response.data[0]["size"] *
-                        (response.data[0]["growth_rate"])}
-                ).eq("username", username
-                     ).execute()
+                    {
+                        "size": response.data[0]["size"]
+                        * (response.data[0]["growth_rate"])
+                    }
+                ).eq("username", username).execute()
         except Exception as e:
             print(f"Something went wrong: {e}")
-            raise HTTPException(
-                status_code=500, detail="Invternal Server Error")
+            raise HTTPException(status_code=500, detail="Invternal Server Error")
 
 
 # fertilize the grass (increase growth rate)
@@ -443,14 +471,16 @@ async def fertilize_grass(username: str, fertilizer_strength: int = 20):
                 plant_grass(username)
             else:
                 db_client.table("grass").update(
-                    {"size": response.data[0]["size"] * (response.data[0]["growth_rate"]),
-                     "growth_rate": response.data[0]["growth_rate"] + (int)(fertilizer_strength)}
-                ).eq("username", username
-                     ).execute()
+                    {
+                        "size": response.data[0]["size"]
+                        * (response.data[0]["growth_rate"]),
+                        "growth_rate": response.data[0]["growth_rate"]
+                        + (int)(fertilizer_strength),
+                    }
+                ).eq("username", username).execute()
         except Exception as e:
             print(f"Something went wrong: {e}")
-            raise HTTPException(
-                status_code=500, detail="Internal Server Error")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 async def user_exists(username: str):
@@ -471,8 +501,8 @@ async def user_exists(username: str):
         if e.status_code == 404:
             raise HTTPException(status_code=404, detail="Invalid username")
         else:
-            raise HTTPException(
-                status_code=500, detail="Internal Server Error")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 if __name__ == "__main__":
     uvicorn.run("example:app", host="127.0.0.1", port=8000, reload=True)

@@ -14,6 +14,7 @@ import { useFetchGrass } from "api/grass/useFetchGrass";
 
 interface IMessage {
   id: number;
+  message_id: number;
   text: string;
   timestamp: number;
   username: string;
