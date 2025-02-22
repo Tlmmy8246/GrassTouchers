@@ -1,13 +1,14 @@
 from models.models import Message, User
 from utils.encrypt import hash_password, verify_password
-from utils.jwt import create_access_token
+from utils.jwt import create_access_token, verify_token
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from db.supabase import create_supabase_client
 import json
-import postgrest
 from postgrest.exceptions import APIError
+from messages import Message, MessageType, parse_reaction, decode_reaction
+from ai.run_model import classify
 
 db_client = create_supabase_client()
 OLD_MESSAGE_LOAD_AMOUNT = 50
@@ -37,8 +38,9 @@ app = FastAPI()
 manager = ConnectionManager()
 
 origins = [
-    "http://localhost",
-    "http://localhost:3000",  # This should be your frontend URL
+    # "http://localhost",
+    # "http://localhost:3000",  # This should be your frontend URL
+    "*"
 ]
 
 app.add_middleware(
@@ -60,6 +62,11 @@ log = []
 """ AUTHENTICATION STUFF STARTS HERE """
 
 
+@app.post("/logout")
+async def logout():
+    return {"message": "Success"}
+
+
 @app.post("/login")
 async def login(user: User):
     try:
@@ -74,7 +81,7 @@ async def login(user: User):
         if not response or not verify_password(
             user.password, response.data.get("password_hash")
         ):
-            raise HTTPException(status_code=401, detail="Invalid password")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
         token = create_access_token(user.username)
 
@@ -85,9 +92,7 @@ async def login(user: User):
         }
 
     except:
-        raise HTTPException(status_code=401, detail="Invalid username")
-
-    return {"message": "Success"}
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
 @app.post("/register")
@@ -108,41 +113,180 @@ async def register(user: User):
 """ AUTHENTICATION STUFF ENDS HERE """
 
 
+@app.get("/leaderboard")
+async def leaderboard(query: str = "messages"):
+    if query == "messages":
+        try:
+            response = db_client.table("messages").select("username").execute()
+            responseUsers = db_client.table(
+                "users").select("username").execute()
+            message_counts = {}
+            result = {}
+            for record in response.data:
+                username = record["username"]
+                if username in message_counts:
+                    message_counts[username] += 1
+                else:
+                    message_counts[username] = 1
+
+            for username, count in message_counts.items():
+                result[username] = count
+
+            for record in responseUsers.data:
+                username = record["username"]
+                if username not in result:
+                    result[username] = 0
+
+            return {"payload": result}
+        except APIError as e:
+            print("Rats", e)
+    elif query == "credits":
+        try:
+            response = (
+                db_client.table("users").select(
+                    "username,anti_social_credit").execute()
+            )
+
+            result = {}
+
+            for record in response.data:
+                result[record["username"]] = record["anti_social_credit"]
+
+            return {"payload": result}
+        except APIError as e:
+            print("Rats", e)
+
+
 async def send_old_messages(websocket: WebSocket):
-    response = None
+    messages = None
+    reactions = None
     try:
-        response = (
+        messages = (
             db_client.table("messages")
             .select("*")
             .limit(OLD_MESSAGE_LOAD_AMOUNT)
             .execute()
         )
+        reactions = (
+            db_client.table("reactions")
+            .select("*")
+            .limit(OLD_MESSAGE_LOAD_AMOUNT)
+            .execute()
+        )
+        for reaction in reactions.data:
+            for message in messages.data:
+                if reaction['message_id'] == message['message_id']:
+                    print("Found",reaction['reaction'],"for",message['message_id'])
+                    decoded_reaction = decode_reaction(reaction['reaction'])
+                    if 'reactions' not in message.keys():
+                        message['reactions'] = {}
+                    if decoded_reaction not in message['reactions'].keys():
+                        message['reactions'][decoded_reaction] = []
+                    message['reactions'][decoded_reaction].append(reaction['username'])
+
+        # print("Messages with reactions:", messages)
+
     except APIError as error:
         print("Failed to load messages, tell the client probably", error)
-    if response != None:
-        for message in response.data:
+    if messages != None:
+        for message in messages.data:
             await manager.send_personal_message(json.dumps(message), websocket)
 
 
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     await send_old_messages(websocket)
     try:
         while True:
             data = await websocket.receive_text()
-            try:
-                message = json.loads(data)
-                response = db_client.table("messages").insert(message).execute()
-                await manager.broadcast(data)
-            except APIError as error:
-                print("Failed to send message, tell the client probably", error)
+
+            message = Message.from_json(data)
+            authenticated = verify_token(message.token) == message.username
+
+            if authenticated:
+                if message.message_type == MessageType.CHAT:
+                    categories = classify(message.content.text)
+                    dad_joke = categories[0]
+                    nerdy = categories[1]
+                    positive = categories[2]
+                    negative = categories[3]
+                    neutral = categories[4]
+                    brainrot = categories[5]
+
+                    if (dad_joke > nerdy and dad_joke > positive and dad_joke > negative and dad_joke > neutral and dad_joke > brainrot):
+                        most_likely_category = "dad_joke"
+                    elif (nerdy > dad_joke and nerdy > positive and nerdy > negative and nerdy > neutral and nerdy > brainrot):
+                        most_likely_category = "nerdy"
+                    elif (positive > dad_joke and positive > nerdy and positive > negative and positive > neutral and positive > brainrot):
+                        most_likely_category = "positive"
+                    elif (negative > dad_joke and negative > nerdy and negative > positive and negative > neutral and negative > brainrot):
+                        most_likely_category = "negative"
+                    elif (neutral > dad_joke and neutral > nerdy and neutral > positive and neutral > negative and neutral > brainrot):
+                        most_likely_category = "neutral"
+                    elif (brainrot > dad_joke and brainrot > nerdy and brainrot > positive and brainrot > negative and brainrot > neutral):
+                        most_likely_category = "brainrot"
+
+                    db_message = {
+                        "username": message.username,
+                        "text": message.content.text,
+                        "timestamp": message.content.timestamp,
+                        "classification": most_likely_category,
+                    }
+
+                    response = db_client.table(
+                        "messages").insert(db_message).execute()
+                    db_message["message_id"] = response.data[0]["message_id"]
+
+                    await manager.broadcast(json.dumps(db_message))
+                elif message.message_type == MessageType.ADD_REACTION:
+                    db_message = {
+                        "username": message.username,
+                        "message_id": message.content.id,
+                        "reaction": parse_reaction(message.content.reaction)
+                    }
+                    response = db_client.table("reactions").insert(db_message).execute()
+                    # Add coins to the client
+                    # Get number of coins
+                    response = (
+                        db_client.table("users")
+                        .select("anti_social_credit")
+                        .eq("username", message.username)
+                        .execute()
+                    )
+                    credits = response.data[0]["anti_social_credit"]
+                    credits += 100
+                    db_message = {
+                        "username"
+                    }
+                    response = (
+                        db_client.table("users")
+                            .update({"anti_social_credit": credits})
+                            .eq("username", message.username)
+                            .execute()
+                    )
+
+                    # TODO: Forward this to clients
+                elif message.message_type == MessageType.REMOVE_REACTION:
+                    response = (db_client.table("reactions")
+                            .delete()
+                            .eq("username", message.username)
+                            .eq("message_id",message.content.id)
+                            .eq("reaction",parse_reaction(message.content.reaction))
+                            .execute()
+                            )
+                    # TODO: Forward this to clients
+            else:
+                raise HTTPException(
+                    status_code=401, detail="Invalid token, please reauthenticate!"
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
 
 """ANTI-SOCIAL CREDIT CODE RESIDES HEREIN"""
+
 
 @app.get("/antiSocialCredit/{username}")
 async def get_anti_social_credit(username: str):
@@ -166,7 +310,8 @@ async def get_anti_social_credit(username: str):
             raise HTTPException(status_code=404, detail="Invalid username")
         else:
             print(f"Something went wrong: {e}")
-            raise HTTPException(status_code=500, detail="Internal Server Error")
+            raise HTTPException(
+                status_code=500, detail="Internal Server Error")
 
 
 """GRASS CODE IS HERE"""

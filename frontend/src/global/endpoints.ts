@@ -10,6 +10,10 @@ export const endpoints = {
 		},
 		global: {
 			messages: 'global/messages'
-		}
-	}
+		},
+	},
+	money: {
+		gbucks: '/antiSocialCredit/{username}'
+	},
+	leaderboard: '/leaderboard'
 }
