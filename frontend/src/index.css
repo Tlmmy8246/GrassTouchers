@@ -13,5 +13,14 @@
   background-image: url("./assets/grass_background_2.gif");
 }
 
+.register-container{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image: url("./assets/grass_background.gif");
+}
+
+
 /* Put this at the very bottom of the file */
 @import "tailwindcss"
