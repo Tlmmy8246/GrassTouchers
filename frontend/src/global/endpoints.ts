@@ -11,5 +11,6 @@ export const endpoints = {
 		global: {
 			messages: 'global/messages'
 		}
-	}
+	},
+	leaderboard: '/leaderboard'
 }

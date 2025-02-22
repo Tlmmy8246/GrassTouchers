@@ -106,6 +106,35 @@ async def register(user: User):
 
 """ AUTHENTICATION STUFF ENDS HERE """
 
+@app.get("/leaderboard")
+async def leaderboard(query: str = "messages"):
+    if query == "messages":
+        try:
+            response = (db_client.table("messages").select("username").execute()
+            )
+            message_counts = {}
+            for record in response.data:
+                username = record['username']
+                if username in message_counts:
+                    message_counts[username] += 1
+                else:
+                    message_counts[username] = 1
+            print("Messages sent by each user:")
+            for username, count in message_counts.items():
+                print(f"User ID: {username}, Messages sent: {count}")
+            print(response)
+        except APIError as e:
+            print("Rats",e)
+    elif query == "credits":
+        try:
+            response = (db_client.table("users")
+                        .select("username,anti_social_credit")
+                        .execute()
+            )
+            print(response)
+        except APIError as e:
+            print("Rats",e)
+
 
 async def send_old_messages(websocket: WebSocket):
     response = None
